@@ -82,6 +82,7 @@ class GameCheckin:
         req = self.http.get(self.is_sign_api, params={"act_id": self.act_id, "region": region, "uid": uid},
                             headers=self.headers)
         data = req.json()
+        log.debug('is_sign data:'+str(data))
         if data["retcode"] != 0:
             if not update and login.update_cookie_token():
                 self.set_headers()
@@ -100,6 +101,9 @@ class GameCheckin:
         for i in range(1, retries + 1):
             if i > 1:
                 log.info(f'触发验证码，即将进行第 {i} 次重试，最多 {retries} 次')
+            log.debug('check_in url:'+str(self.sign_api))
+            log.debug('check_in headers:'+str(header))
+            log.debug('check_in json:'+str({'act_id': self.act_id, 'region': account[2], 'uid': account[1]}))
             result = self.http.post(url=self.sign_api, headers=header,
                                     json={'act_id': self.act_id, 'region': account[2], 'uid': account[1]})
             if result.status_code == 429:
@@ -107,6 +111,7 @@ class GameCheckin:
                 log.warning('429 Too Many Requests，即将进入下一次请求')
                 continue
             data = result.json()
+            log.debug('check_in data:', data)
             if data["retcode"] == 0 and data["data"]["success"] == 1 and i < retries:
                 captcha_result = captcha.game_captcha(data["data"]["gt"], data["data"]["challenge"])
                 if captcha_result is not None:
@@ -146,7 +151,8 @@ class GameCheckin:
                 log.info(f"{self.player_name}「{account[0]}」今天已经签到过了~\r\n今天获得的奖"
                          f"励是{tools.get_item(self.checkin_rewards[sign_days])}")
                 sign_days += 1
-            else:
+            #else:
+            if True:#do check_in whatsoever
                 time.sleep(random.randint(2, 8))
                 req = self.check_in(account)
                 if req is None:
